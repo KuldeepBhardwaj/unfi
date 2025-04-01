@@ -22,4 +22,5 @@ public class CarDto {
 
     @NotBlank(message = "VIN is mandatory")
     private String vin;
+    
 }

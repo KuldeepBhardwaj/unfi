@@ -1,17 +1,21 @@
 package com.unfi.codechallenges.cars.service;
 
-import com.unfi.codechallenges.cars.dto.CarDto;
-import com.unfi.codechallenges.cars.entity.Car;
-import com.unfi.codechallenges.cars.repository.CarRepository;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import com.unfi.codechallenges.cars.dto.CarDto;
+import com.unfi.codechallenges.cars.entity.Car;
+import com.unfi.codechallenges.cars.exception.CarNotFoundException;
+import com.unfi.codechallenges.cars.repository.CarRepository;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+
 public class CarService {
 
     private final CarRepository carRepository;
@@ -21,7 +25,8 @@ public class CarService {
     }
 
     public CarDto createCar(CarDto car) {
-        var newCar = new Car(car.getMake(), car.getModel(), car.getYear());
+		Car newCar = Car.builder().make(car.getMake()).model(car.getModel()).year(car.getYear()).vin(car.getVin())
+				.isActive(Boolean.TRUE).build();
         log.info("Creating car");
         var createdCar = carRepository.save(newCar);
         log.info("Created car with id: {}", createdCar.getId());
@@ -35,15 +40,16 @@ public class CarService {
     }
 
     public CarDto update(CarDto car) {
-        Optional<Car> optionalCar = carRepository.findById(car.getId());
-        if (optionalCar.isPresent()) {
-            var foundCar = optionalCar.get();
-            foundCar.setMake(car.getModel());
+    	Car foundCar = carRepository.findById(car.getId())
+				.orElseThrow(() -> new CarNotFoundException("Car not found with ID: " + car.getId()));
+        if (null != foundCar) {
+            foundCar.setMake(car.getMake());
             foundCar.setModel(car.getModel());
             foundCar.setYear(car.getYear());
             foundCar.setVin(car.getVin());
             foundCar.setIsActive(true);
             var updatedCar = carRepository.save(foundCar);
+            log.info("Updated car {}", updatedCar);
             return CarDto.builder()
                     .id(updatedCar.getId())
                     .make(updatedCar.getMake())
@@ -51,36 +57,35 @@ public class CarService {
                     .year(updatedCar.getYear())
                     .vin(updatedCar.getVin())
                     .build();
-        } else {
-            throw new RuntimeException("Car not found");
-        }
+        } 
+        return null;
     }
 
-    public void delete(CarDto car) {
-        Optional<Car> optionalCar = carRepository.findById(car.getId());
-        if (optionalCar.isPresent()) {
-            var foundCar = optionalCar.get();
-            log.info("Soft deleting car with id: {}", foundCar.getId());
-            foundCar.setIsActive(false);
-            carRepository.save(foundCar);
-        } else {
-            throw new RuntimeException("Car not found");
-        }
-    }
+	public void delete(CarDto car) {
+
+		Car optionalCar = carRepository.findById(car.getId())
+				.orElseThrow(() -> new CarNotFoundException("Car not found with ID: " + car.getId()));
+		if (null != optionalCar) {
+			log.info("Soft deleting car with id: {}", optionalCar.getId());
+			optionalCar.setIsActive(false);
+			carRepository.softDeleteById(car.getId());
+		} 
+	}
 
     public List<CarDto> getAll() {
-        var allCars = carRepository.findAllByIsActiveTrue();
-        List<CarDto> cars = new ArrayList();
-        for (Car car : allCars) {
-            cars.add(CarDto.builder()
-                    .id(car.getId())
-                    .make(car.getMake())
-                    .model(car.getModel())
-                    .year(car.getYear())
-                    .vin(car.getVin())
-                    .build()
-            );
-        }
-        return cars;
+    	return carRepository.findAllByIsActiveTrue().stream()
+    		    .map(car -> CarDto.builder()
+    		        .id(car.getId())
+    		        .make(car.getMake())
+    		        .model(car.getModel())
+    		        .year(car.getYear())
+    		        .vin(car.getVin())
+    		        .build())
+    		    .collect(Collectors.toList());
+
     }
+    
+    
+    
+   
 }
