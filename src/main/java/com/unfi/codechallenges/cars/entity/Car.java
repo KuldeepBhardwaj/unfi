@@ -10,8 +10,7 @@ import java.time.LocalDateTime;
 public class Car {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "CAR_SEQ")
-    @SequenceGenerator(sequenceName = "CAR_SEQ", allocationSize = 1, name = "CAR_SEQ")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID")
     private Long id;
 
@@ -39,10 +38,12 @@ public class Car {
     // Constructors
     public Car() {}
 
-    public Car(String make, String model, String year) {
+    public Car(String make, String model, String year, String vin, Boolean isActive) {
         this.make = make;
         this.model = model;
         this.year = year;
+        this.vin = vin;
+        this.isActive = isActive;
     }
 
     @PrePersist

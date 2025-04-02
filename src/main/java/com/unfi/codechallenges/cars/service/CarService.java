@@ -21,7 +21,7 @@ public class CarService {
     }
 
     public CarDto createCar(CarDto car) {
-        var newCar = new Car(car.getMake(), car.getModel(), car.getYear());
+        var newCar = new Car(car.getMake(), car.getModel(), car.getYear(), car.getVin(), Boolean.TRUE);
         log.info("Creating car");
         var createdCar = carRepository.save(newCar);
         log.info("Created car with id: {}", createdCar.getId());
