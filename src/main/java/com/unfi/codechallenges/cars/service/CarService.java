@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.unfi.codechallenges.cars.dto.CarDto;
 import com.unfi.codechallenges.cars.dto.CarDto.CarDtoBuilder;
 import com.unfi.codechallenges.cars.entity.Car;
+import com.unfi.codechallenges.cars.exception.CarNotFoundException;
 import com.unfi.codechallenges.cars.repository.CarRepository;
 
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +36,7 @@ public class CarService {
 
 	public CarDto update(CarDto car) {
 		Car foundCar = carRepository.findById(car.getId())
-				.orElseThrow(() -> new RuntimeException(CAR_NOT_FOUND_MESSAGE + car.getId()));
+				.orElseThrow(() -> new CarNotFoundException(CAR_NOT_FOUND_MESSAGE + car.getId()));
 		foundCar.setMake(car.getMake());
 		foundCar.setModel(car.getModel());
 		foundCar.setYear(car.getYear());
@@ -48,7 +49,7 @@ public class CarService {
 
 	public void delete(CarDto car) {
 		Car foundCar = carRepository.findById(car.getId())
-				.orElseThrow(() -> new RuntimeException(CAR_NOT_FOUND_MESSAGE + car.getId()));
+				.orElseThrow(() -> new CarNotFoundException(CAR_NOT_FOUND_MESSAGE + car.getId()));
 		log.info("Soft deleting car with id: {}", foundCar.getId());
 		foundCar.setIsActive(false);
 		carRepository.save(foundCar);

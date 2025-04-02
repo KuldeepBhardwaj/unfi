@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.unfi.codechallenges.cars.dto.CarDto;
+import com.unfi.codechallenges.cars.exception.CarNotFoundException;
+import com.unfi.codechallenges.cars.exception.ErrorResponse;
 import com.unfi.codechallenges.cars.service.CarService;
 
 import jakarta.validation.Valid;
@@ -42,25 +44,44 @@ public class CarsController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<CarDto> createCar(@Valid @RequestBody CarDto car) {
-    	log.info("Creaing a car {}", car);
-        return ResponseEntity.ok(carService.createCar(car));
-    }
+	public ResponseEntity<Object> createCar(@Valid @RequestBody CarDto car) {
+		log.info("Creaing a car {}", car);
+		try {
+			return ResponseEntity.ok(carService.createCar(car));
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ErrorResponse("Internal Error Occured", e.getMessage())); // Catch other unexpected errors
+
+		}
+	}
 
     @PutMapping("/{id}")
-    public ResponseEntity<CarDto> updateCar(@PathVariable Long id, @Valid @RequestBody CarDto car) {
-    	log.info("Updating car with id : {}", id);
-    	car.setId(id); // Ensure the ID matches the DTO
-        return ResponseEntity.ok(carService.update(car));
+    public ResponseEntity<Object> updateCar(@PathVariable Long id, @Valid @RequestBody CarDto car) {
+    	log.info("Updating car witd id : {}", id);
+        try {
+            car.setId(id); // Ensure the ID matches the DTO
+            CarDto updatedCar = carService.update(car);
+            return ResponseEntity.ok(updatedCar);
+        } catch (CarNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("CAR_NOT_FOUND", e.getMessage())); // Return 404 if car not found
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("Internal Error Occured", e.getMessage())); // Catch other unexpected errors
+        }
     }
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public ResponseEntity<Void> deleteCar(@PathVariable Long id) {
+	public ResponseEntity<Object> deleteCar(@PathVariable Long id) {
 		log.info("Deleting car with id: {}", id);
-		CarDto carDto = CarDto.builder().id(id).build();
-		carService.delete(carDto);
-		return ResponseEntity.noContent().build();
+        try {
+            CarDto carDto = CarDto.builder().id(id).build(); // Create DTO with ID
+            carService.delete(carDto);
+            return ResponseEntity.noContent().build();
+        } catch (CarNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("CAR_NOT_FOUND", e.getMessage())); // Return 404 if car not found
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("Internal Error Occured", e.getMessage())); // Catch other unexpected errors
+        }
 	}
 
     // Custom exception handler for validation errors
