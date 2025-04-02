@@ -38,7 +38,7 @@ public class CarService {
         Optional<Car> optionalCar = carRepository.findById(car.getId());
         if (optionalCar.isPresent()) {
             var foundCar = optionalCar.get();
-            foundCar.setMake(car.getModel());
+            foundCar.setMake(car.getMake());
             foundCar.setModel(car.getModel());
             foundCar.setYear(car.getYear());
             foundCar.setVin(car.getVin());
