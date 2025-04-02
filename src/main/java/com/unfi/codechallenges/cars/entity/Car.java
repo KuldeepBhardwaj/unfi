@@ -1,12 +1,26 @@
 package com.unfi.codechallenges.cars.entity;
 
-import jakarta.persistence.*;
-import lombok.Data;
-
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity(name = "CAR")
+
+
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Car {
 
     @Id
@@ -34,17 +48,6 @@ public class Car {
 
     @Column(name = "LAST_UPDATED")
     private LocalDateTime lastUpdated;
-
-    // Constructors
-    public Car() {}
-
-    public Car(String make, String model, String year, String vin, Boolean isActive) {
-        this.make = make;
-        this.model = model;
-        this.year = year;
-        this.vin = vin;
-        this.isActive = isActive;
-    }
 
     @PrePersist
     protected void onCreate() {
