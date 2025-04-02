@@ -1,16 +1,27 @@
 package com.unfi.codechallenges.cars.controller;
 
-import com.unfi.codechallenges.cars.dto.CarDto;
-import com.unfi.codechallenges.cars.service.CarService;
-import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.unfi.codechallenges.cars.dto.CarDto;
+import com.unfi.codechallenges.cars.service.CarService;
+
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
@@ -30,26 +41,37 @@ public class CarsController {
     }
 
     @PostMapping
-    public ResponseEntity<CarDto> createCar(@RequestBody CarDto car) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<CarDto> createCar(@Valid @RequestBody CarDto car) {
+    	log.info("Creaing a car {}", car);
         return ResponseEntity.ok(carService.createCar(car));
     }
 
-    @PostMapping(path = "/update")
-    public ResponseEntity<CarDto> updateCar(@RequestBody CarDto car) {
+    @PutMapping("/{id}")
+    public ResponseEntity<CarDto> updateCar(@PathVariable Long id, @Valid @RequestBody CarDto car) {
+    	log.info("Updating car with id : {}", id);
+    	car.setId(id); // Ensure the ID matches the DTO
         return ResponseEntity.ok(carService.update(car));
     }
 
-    @PostMapping(path = "/delete")
-    public ResponseEntity<CarDto> deleteCar(@RequestBody CarDto car) {
-        carService.delete(car);
-        return ResponseEntity.ok(null);
-    }
+	@DeleteMapping("/{id}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public ResponseEntity<Void> deleteCar(@PathVariable Long id) {
+		log.info("Deleting car with id: {}", id);
+		CarDto carDto = CarDto.builder().id(id).build();
+		carService.delete(carDto);
+		return ResponseEntity.noContent().build();
+	}
 
     // Custom exception handler for validation errors
-    @ExceptionHandler({ConstraintViolationException.class, MethodArgumentNotValidException.class})
-    public ResponseEntity<String> handleValidationExceptions(Exception e) {
-        log.error("Uh oh, an exception happened.");
-        return ResponseEntity.badRequest().body(e.getMessage());
-    }
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public ResponseEntity<String> handleValidationExceptions(MethodArgumentNotValidException e) {
+	    String errorMessage = e.getBindingResult().getFieldErrors()
+	                          .stream()
+	                          .map(error -> error.getField() + ": " + error.getDefaultMessage())
+	                          .collect(Collectors.joining(", "));
+	    log.error("Validation error: {}", errorMessage);
+	    return ResponseEntity.badRequest().body(errorMessage);
+	}
 
 }
